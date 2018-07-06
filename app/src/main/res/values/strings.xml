@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">MovieExplorer</string>
+    <string name="title_activity_movie_category">MovieCategoryActivity</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+    <string name="lastest_movie">最新电影</string>
+    <string name="rihan_movie">经典影片</string>
+    <string name="guonei_movie">国内电影</string>
+    <string name="oumei_movie">欧美电影</string>
+    <string name="qita_movie">其他电影</string>
+    <string name="上一页" />
+    <string name="下一页" />
+    <string name="page_next">下一页</string>
+    <string name="page_previous">上一页</string>
+    <string name="download">下载</string>
+</resources>
