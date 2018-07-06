@@ -17,4 +17,5 @@
     <string name="page_next">下一页</string>
     <string name="page_previous">上一页</string>
     <string name="download">下载</string>
+    <string name="download_err_notice">请在手机上安装迅雷后使用本软件，或者等待本软件的后续更新</string>
 </resources>

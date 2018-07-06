@@ -1,13 +1,17 @@
 package com.byron.movieexplorer;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,6 +60,15 @@ public class MovieDetailActivity extends AppCompatActivity {
     @BindView(R.id.movie_capture)
     ImageView movieCapture;
 
+    @BindView(R.id.movie_detail_toolbar)
+    Toolbar toolbar;
+
+    @BindView(R.id.title_marqueen)
+    TextView titleMarqueen;
+
+    @BindView(R.id.progressBar)
+    ProgressBar progressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,11 +80,13 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         String title = getIntent().getStringExtra(MOVIE_DETAIL_TITLE);
 
+        setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
-            actionBar.setTitle(title);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        titleMarqueen.setText(title);
+        titleMarqueen.setSelected(true);
 
         getMovieDetail(link);
     }
@@ -79,53 +94,51 @@ public class MovieDetailActivity extends AppCompatActivity {
     private void getMovieDetail(String link) {
         final String fullLink = "http://www.ygdy8.net" + link;
         Timber.d("movie link:" + fullLink);
+        progressBar.setVisibility(View.VISIBLE);
 
         Observable<MovieDetailItem> observable = Observable.create(
                 new ObservableOnSubscribe<MovieDetailItem>() {
                     @Override
                     public void subscribe(ObservableEmitter<MovieDetailItem> emitter) throws Exception {
 
-                        Document document = Jsoup.connect(fullLink).get();
+                        Document document;
+                        int retryTimes = 0;
 
-                        String title = document.selectFirst("div.title_all font").text();
-                        Elements elements = document.select("div#Zoom p img");
-                        String thumbnail = null;
-                        String capture = null;
-                        if(elements.size() > 0) {
-                            thumbnail = elements.get(0).attr("src");
-                            capture = elements.get(elements.size() - 1).attr("src");
+                        while (retryTimes < 5){
+                            try{
+                                document = Jsoup.connect(fullLink).get();
+                                String title = document.selectFirst("div.title_all font").text();
+                                Elements elements = document.select("div#Zoom p img");
+                                String thumbnail = null;
+                                String capture = null;
+                                if(elements.size() > 0) {
+                                    thumbnail = elements.get(0).attr("src");
+                                    capture = elements.get(elements.size() - 1).attr("src");
+                                }
+
+                                String allDetail = document.selectFirst("div#Zoom").outerHtml();
+                                int firstImg = allDetail.indexOf("alt=") + "alt=\"\">".length();
+                                int lastImg = allDetail.lastIndexOf("<img");
+                                String detail;
+                                try{
+                                    detail = allDetail.substring(firstImg, lastImg).replace("<br>", "\n");
+                                } catch (Exception e) {
+                                    detail = allDetail.replace("<br>", "\n");
+                                }
+
+                                String download = document.selectFirst("div#Zoom table a").text();
+
+                                MovieDetailItem item = new MovieDetailItem(title, thumbnail, detail, download, capture);
+                                Timber.d("on next");
+                                emitter.onNext(item);
+                                emitter.onComplete();
+                                retryTimes = 10;
+                            }catch (Exception e) {
+                                e.printStackTrace();
+                                retryTimes ++;
+                                Thread.sleep(1000 * retryTimes);
+                            }
                         }
-
-
-//                        String html = document.selectFirst("div#Zoom").html();
-//                        Document subDoc = Jsoup.parseBodyFragment(html);
-//
-//                        Elements imgs = subDoc.select("img");
-//
-//                        for (Element img : imgs) {
-//                            img.replaceWith(new TextNode( ""));
-//                        }
-//
-//                        Timber.d("dada:" + subDoc.html().replace("<br>", "\n"));
-//
-//                        String detail = subDoc.html().replace("<br>", "\n");
-                        String allDetail = document.selectFirst("div#Zoom").outerHtml();
-                        int firstImg = allDetail.indexOf("alt=") + "alt=\"\">".length();
-                        int lastImg = allDetail.lastIndexOf("<img");
-                        String detail;
-                        try{
-                            detail = allDetail.substring(firstImg, lastImg).replace("<br>", "\n");
-                        } catch (Exception e) {
-                            detail = allDetail.replace("<br>", "\n");
-                        }
-
-                        Timber.d(detail);
-                        String download = document.selectFirst("div#Zoom table a").text();
-
-                        MovieDetailItem item = new MovieDetailItem(title, thumbnail, detail, download, capture);
-                        Timber.d("on next");
-                        emitter.onNext(item);
-                        emitter.onComplete();
                     }
                 }
         );
@@ -172,6 +185,8 @@ public class MovieDetailActivity extends AppCompatActivity {
 
                         movieDetail.setText(movieDetailItem.getTitleDetail());
                         downloadLink.setText(movieDetailItem.getDownloadLink());
+
+                        progressBar.setVisibility(View.INVISIBLE);
                     }
                 });
             }
@@ -203,11 +218,13 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(thunderLink));
         intent.addCategory("android.intent.category.DEFAULT");
-        try {
+
+
+        if(null != intent.resolveActivity(getPackageManager())) {
             startActivity(intent);
-        }catch (Exception e) {
+        }else {
             //e.printStackTrace();
-            Toast.makeText(this, "请在手机上安装迅雷后使用本软件，或者等待本软件的后续更新", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.download_err_notice, Toast.LENGTH_SHORT).show();
         }
     }
 }

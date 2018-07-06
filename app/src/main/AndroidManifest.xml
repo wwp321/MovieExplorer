@@ -16,7 +16,7 @@
         <activity
             android:name=".MovieCategoryActivity"
             android:label="@string/title_activity_movie_category"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,7 +25,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".MovieDetailActivity"
-            android:parentActivityName=".MovieCategoryActivity"></activity>
+            android:parentActivityName=".MovieCategoryActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
